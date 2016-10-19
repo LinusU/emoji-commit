@@ -1,0 +1,9 @@
+[package]
+
+name = "emoji_commit"
+version = "0.0.1"
+authors = [ "Linus Unnebäck <linus@folkdatorn.se>" ]
+
+[dependencies]
+
+termion = "1.0"
