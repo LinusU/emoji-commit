@@ -2,7 +2,7 @@
 name = "emoji_commit"
 version = "0.0.1"
 dependencies = [
- "ansi-escapes 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log-update 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "termion 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -17,6 +17,14 @@ version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "log-update"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "ansi-escapes 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "termion"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -27,4 +35,5 @@ dependencies = [
 [metadata]
 "checksum ansi-escapes 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "163bff5f88583fe2d90e3002ea2a3b613c93b5e3eb84daf7fd539032e32a68b3"
 "checksum libc 0.2.17 (registry+https://github.com/rust-lang/crates.io-index)" = "044d1360593a78f5c8e5e710beccdc24ab71d1f01bc19a29bcacdba22e8475d8"
+"checksum log-update 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "6f04940d2443eee57bf0a6e9751a96c1d8af76ff02d8380b1fc0cc67acd393e5"
 "checksum termion 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "ce9884af069456867e19fd5648b8908d5c9378f586b2659aaa6f3a4088fdb867"

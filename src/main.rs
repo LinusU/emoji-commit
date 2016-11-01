@@ -1,49 +1,5 @@
 extern crate termion;
-extern crate ansi_escapes;
-
-mod log_update {
-    use ansi_escapes;
-    use std::io::Write;
-
-    use std::io::Error;
-
-    pub struct LogUpdate<W: Write> {
-        stream: W,
-        previous_line_count: u16
-    }
-
-    impl<W: Write> LogUpdate<W> {
-        pub fn new(mut stream: W) -> Result<Self, Error> {
-            try!(write!(stream, "{}", ansi_escapes::CursorHide));
-            try!(stream.flush());
-
-            Ok(LogUpdate { stream: stream, previous_line_count: 0 })
-        }
-
-        pub fn render(&mut self, text: &str) -> Result<(), Error> {
-            try!(write!(self.stream, "{}{}", ansi_escapes::EraseLines(self.previous_line_count), text));
-            try!(self.stream.flush());
-            self.previous_line_count = text.chars().filter(|x| *x == '\n').count() as u16 + 1;
-
-            Ok(())
-        }
-
-        pub fn clear(&mut self) -> Result<(), Error> {
-            try!(write!(self.stream, "{}", ansi_escapes::EraseLines(self.previous_line_count)));
-            try!(self.stream.flush());
-            self.previous_line_count = 0;
-
-            Ok(())
-        }
-    }
-
-    impl<W: Write> Drop for LogUpdate<W> {
-        fn drop(&mut self) {
-            write!(self.stream, "{}", ansi_escapes::CursorShow).unwrap();
-            self.stream.flush().unwrap();
-        }
-    }
-}
+extern crate log_update;
 
 use termion::event::Key;
 use termion::input::TermRead;
