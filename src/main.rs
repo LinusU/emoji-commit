@@ -1,31 +1,5 @@
 extern crate termion;
-
-mod ansi_escapes {
-    pub static CURSOR_HIDE: &'static str = "\x1B[?25l";
-    pub static CURSOR_SHOW: &'static str = "\x1B[?25h";
-
-    pub static CURSOR_LEFT: &'static str = "\x1B[1000D";
-    pub static ERASE_END_LINE: &'static str = "\x1B[K";
-
-    pub fn cursor_up(count: u32) -> String {
-        format!("\x1B[{}A", count)
-    }
-
-    pub fn erase_lines(count: u32) -> String {
-        let mut result: String = "".to_owned();
-
-        for idx in 0..count {
-            if idx > 0 {
-                result.push_str(&*cursor_up(1));
-            }
-
-            result.push_str(CURSOR_LEFT);
-            result.push_str(ERASE_END_LINE);
-        }
-
-        result
-    }
-}
+extern crate ansi_escapes;
 
 mod log_update {
     use ansi_escapes;
@@ -35,27 +9,27 @@ mod log_update {
 
     pub struct LogUpdate<W: Write> {
         stream: W,
-        previous_line_count: u32
+        previous_line_count: u16
     }
 
     impl<W: Write> LogUpdate<W> {
         pub fn new(mut stream: W) -> Result<Self, Error> {
-            try!(write!(stream, "{}", ansi_escapes::CURSOR_HIDE));
+            try!(write!(stream, "{}", ansi_escapes::CursorHide));
             try!(stream.flush());
 
             Ok(LogUpdate { stream: stream, previous_line_count: 0 })
         }
 
         pub fn render(&mut self, text: &str) -> Result<(), Error> {
-            try!(write!(self.stream, "{}{}", ansi_escapes::erase_lines(self.previous_line_count), text));
+            try!(write!(self.stream, "{}{}", ansi_escapes::EraseLines(self.previous_line_count), text));
             try!(self.stream.flush());
-            self.previous_line_count = text.chars().filter(|x| *x == '\n').count() as u32 + 1;
+            self.previous_line_count = text.chars().filter(|x| *x == '\n').count() as u16 + 1;
 
             Ok(())
         }
 
         pub fn clear(&mut self) -> Result<(), Error> {
-            try!(write!(self.stream, "{}", ansi_escapes::erase_lines(self.previous_line_count)));
+            try!(write!(self.stream, "{}", ansi_escapes::EraseLines(self.previous_line_count)));
             try!(self.stream.flush());
             self.previous_line_count = 0;
 
@@ -65,7 +39,7 @@ mod log_update {
 
     impl<W: Write> Drop for LogUpdate<W> {
         fn drop(&mut self) {
-            write!(self.stream, "{}", ansi_escapes::CURSOR_SHOW).unwrap();
+            write!(self.stream, "{}", ansi_escapes::CursorShow).unwrap();
             self.stream.flush().unwrap();
         }
     }
