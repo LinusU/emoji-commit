@@ -6,3 +6,4 @@ authors = ["Linus Unnebäck <linus@folkdatorn.se>"]
 [dependencies]
 termion = "1.0"
 log-update = "~0.1.0"
+default-editor = "~0.1.0"

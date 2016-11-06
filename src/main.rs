@@ -1,5 +1,6 @@
 extern crate termion;
 extern crate log_update;
+extern crate default_editor;
 
 use termion::event::Key;
 use termion::input::TermRead;
@@ -85,6 +86,12 @@ fn run_cmd(cmd: &mut Command) {
     }
 }
 
+fn launch_default_editor(out_path: String) {
+    let editor = default_editor::get().unwrap();
+
+    run_cmd(Command::new(&editor).arg(out_path))
+}
+
 fn launch_git_with_self_as_editor() {
     let self_path = std::env::current_exe().unwrap();
 
@@ -116,7 +123,11 @@ fn collect_information_and_write_to_file(out_path: String) {
 
 fn main() {
     if let Some(out_path) = env::args().nth(1) {
-        collect_information_and_write_to_file(out_path);
+        if out_path.ends_with(".git/COMMIT_EDITMSG") {
+            collect_information_and_write_to_file(out_path);
+        } else {
+            launch_default_editor(out_path);
+        }
     } else {
         launch_git_with_self_as_editor();
     }
