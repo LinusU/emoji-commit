@@ -5,8 +5,8 @@ use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 
-use std::io::{Write, stderr, stdout, stdin};
-use std::process::exit;
+use std::io::{Write, stderr, stdin};
+use std::process::{Command, exit};
 
 use std::env;
 use std::fs::File;
@@ -77,7 +77,21 @@ fn abort() -> ! {
     exit(1)
 }
 
-fn main() {
+fn run_cmd(cmd: &mut Command) {
+    let status = cmd.status().unwrap();
+
+    if !status.success() {
+        exit(status.code().unwrap_or(1));
+    }
+}
+
+fn launch_git_with_self_as_editor() {
+    let self_path = std::env::current_exe().unwrap();
+
+    run_cmd(Command::new("git").arg("commit").env("GIT_EDITOR", self_path))
+}
+
+fn collect_information_and_write_to_file(out_path: String) {
     let maybe_emoji = select_emoji();
 
     if maybe_emoji == None {
@@ -95,11 +109,15 @@ fn main() {
 
         let result = format!("{} {}\n", emoji, input.trim());
 
-        if let Some(out_path) = env::args().nth(1) {
-            let mut f = File::create(out_path).unwrap();
-            f.write_all(result.as_bytes()).unwrap();
-        } else {
-            write!(stdout(), "{}", result).unwrap();
-        }
+        let mut f = File::create(out_path).unwrap();
+        f.write_all(result.as_bytes()).unwrap();
+    }
+}
+
+fn main() {
+    if let Some(out_path) = env::args().nth(1) {
+        collect_information_and_write_to_file(out_path);
+    } else {
+        launch_git_with_self_as_editor();
     }
 }
