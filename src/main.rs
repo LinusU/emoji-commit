@@ -14,14 +14,14 @@ use std::fs::File;
 
 use log_update::LogUpdate;
 
-fn print_emoji_selector<W: Write>(log_update: &mut LogUpdate<W>, selected: u32) {
-    let text = format!("{}{}\r\n{}{}\r\n{}{}\r\n{}{}\r\n{}{}",
-        if selected == 0 { "👉  " } else { "   " }, "💥  - Breaking",
-        if selected == 1 { "👉  " } else { "   " }, "🎉  - Feature",
-        if selected == 2 { "👉  " } else { "   " }, "🐛  - Bugfix",
-        if selected == 3 { "👉  " } else { "   " }, "🔥  - Cleanup / Performance",
-        if selected == 4 { "👉  " } else { "   " }, "🌹  - Other",
-    );
+mod commit_type;
+use commit_type::CommitType;
+
+fn print_emoji_selector<W: Write>(log_update: &mut LogUpdate<W>, selected: &CommitType) {
+    let text = CommitType::iter_variants()
+        .map(|t| format!("{}  {}  - {}", if t == *selected { "👉" } else { " " }, t.emoji(), t.description()))
+        .collect::<Vec<_>>()
+        .join("\r\n");
 
     log_update.render(&text).unwrap();
 }
@@ -33,40 +33,24 @@ fn select_emoji() -> Option<&'static str> {
     let mut key_stream = stdin().keys();
 
     let mut aborted = false;
-    let mut selected: u32 = 0;
+    let mut selected = CommitType::Breaking;
 
-    if !aborted {
-        print_emoji_selector(&mut log_update, selected);
+    loop {
+        print_emoji_selector(&mut log_update, &selected);
 
-        loop {
-            match key_stream.next().unwrap().unwrap() {
-                Key::Ctrl('c') => { aborted = true; break },
-                Key::Char('\n') => break,
-                Key::Up => selected = (selected + 4) % 5,
-                Key::Down => selected = (selected + 1) % 5,
-                _ => {},
-            }
-
-            print_emoji_selector(&mut log_update, selected);
+        match key_stream.next().unwrap().unwrap() {
+            Key::Ctrl('c') => { aborted = true; break },
+            Key::Char('\n') => break,
+            Key::Up => selected = selected.prev_variant().unwrap_or(CommitType::last_variant()),
+            Key::Down => selected = selected.next_variant().unwrap_or(CommitType::first_variant()),
+            _ => {},
         }
-
-        log_update.clear().unwrap();
     }
 
+    log_update.clear().unwrap();
     raw_output.flush().unwrap();
 
-    if aborted {
-        return None
-    }
-
-    match selected {
-        0 => Some("💥"),
-        1 => Some("🎉"),
-        2 => Some("🐛"),
-        3 => Some("🔥"),
-        4 => Some("🌹"),
-        _ => panic!("Invalid value for selected"),
-    }
+    if aborted { None } else { Some(selected.emoji()) }
 }
 
 fn abort() -> ! {
