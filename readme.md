@@ -28,7 +28,7 @@ Simply call `emoji-commit` as you would any other command:
 emoji-commit
 ```
 
-### Configure GIT
+### Configure Git
 
 You can set the `core.editor` configuration in git the the emoji committer to always use it when committing.
 
