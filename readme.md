@@ -4,6 +4,8 @@ Make your git logs beautiful and readable with the help of emojis 🎉
 
 The idea with the emoji committer is to tag each of your commit with an emoji that corresponds to a bump in [semver][1]. This information can the be used to automatically publish new versions, generate a change log and make the git log give you a quicker glance over whats been happening.
 
+![The emoji committer in action](https://cloud.githubusercontent.com/assets/189580/20077151/7dcf0b3e-a53b-11e6-9043-55f6743f898a.gif)
+
 ## Table of contents
 
 - [Installation](#installation)
