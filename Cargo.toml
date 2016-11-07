@@ -3,6 +3,14 @@ name = "emoji_commit"
 version = "0.0.1"
 authors = ["Linus Unnebäck <linus@folkdatorn.se>"]
 
+description = "Make your git logs beautiful and readable with the help of emojis"
+homepage = "https://github.com/LinusU/emoji-commit"
+documentation = "https://github.com/LinusU/emoji-commit#readme"
+repository = "https://github.com/LinusU/emoji-commit"
+keywords = ["commit", "committer", "emoji", "git", "log"]
+readme = "readme.md"
+license = "MIT"
+
 [dependencies]
 termion = "1.0"
 log-update = "~0.1.0"
