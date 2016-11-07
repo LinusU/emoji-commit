@@ -33,7 +33,7 @@ emoji-commit
 You can set the `core.editor` configuration in git the the emoji committer to always use it when committing.
 
 ```sh
-git configure --global core.editor 'emoji-commit'
+git config --global core.editor 'emoji-commit'
 ```
 
 ## The emojis
