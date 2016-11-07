@@ -1,5 +1,5 @@
 [package]
-name = "emoji_commit"
+name = "emoji-commit"
 version = "0.0.1"
 authors = ["Linus Unnebäck <linus@folkdatorn.se>"]
 

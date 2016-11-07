@@ -22,10 +22,10 @@ The emoji committer can be used in two ways. Either invoked directly, or by conf
 
 ### Invoke directly
 
-Simply call `emoji_commit` as you would any other command:
+Simply call `emoji-commit` as you would any other command:
 
 ```sh
-emoji_commit
+emoji-commit
 ```
 
 ### Configure GIT
@@ -33,7 +33,7 @@ emoji_commit
 You can set the `core.editor` configuration in git the the emoji committer to always use it when committing.
 
 ```sh
-git configure --global core.editor 'emoji_commit'
+git configure --global core.editor 'emoji-commit'
 ```
 
 ## The emojis
