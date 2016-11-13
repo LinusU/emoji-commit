@@ -1,6 +1,7 @@
 extern crate termion;
 extern crate log_update;
 extern crate default_editor;
+extern crate emoji_commit_type;
 
 use termion::event::Key;
 use termion::input::TermRead;
@@ -13,9 +14,7 @@ use std::env;
 use std::fs::File;
 
 use log_update::LogUpdate;
-
-mod commit_type;
-use commit_type::CommitType;
+use emoji_commit_type::CommitType;
 
 fn print_emoji_selector<W: Write>(log_update: &mut LogUpdate<W>, selected: &CommitType) {
     let text = CommitType::iter_variants()
