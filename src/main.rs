@@ -16,6 +16,12 @@ use std::fs::File;
 use log_update::LogUpdate;
 use emoji_commit_type::CommitType;
 
+mod commit_rules;
+
+static PASS: &'static str = "\u{001b}[32m✔\u{001b}[39m";
+static FAIL: &'static str = "\u{001b}[31m✖\u{001b}[39m";
+static CURSOR: &'static str = "\u{001b}[4m \u{001b}[24m";
+
 fn print_emoji_selector<W: Write>(log_update: &mut LogUpdate<W>, selected: &CommitType) {
     let text = CommitType::iter_variants()
         .map(|t| format!("{}  {}  - {}", if t == *selected { "👉" } else { " " }, t.emoji(), t.description()))
@@ -50,6 +56,45 @@ fn select_emoji() -> Option<&'static str> {
     raw_output.flush().unwrap();
 
     if aborted { None } else { Some(selected.emoji()) }
+}
+
+fn collect_commit_message(selected_emoji: &'static str) -> Option<String> {
+    let mut log_update = LogUpdate::new(stderr()).unwrap();
+    let mut raw_output = stderr().into_raw_mode().unwrap();
+
+    let mut key_stream = stdin().keys();
+
+    let mut aborted = false;
+    let mut input = String::new();
+
+    loop {
+        let rule_text = commit_rules::CommitRuleIterator::new()
+            .map(|t| format!("{} {}", if (t.test)(input.as_str()) { PASS } else { FAIL }, t.text))
+            .collect::<Vec<_>>()
+            .join("\r\n");
+        let text = format!(
+            "\r\nRemember the seven rules of a great Git commit message:\r\n\r\n{}\r\n\r\n{}  {}{}",
+            rule_text,
+            selected_emoji,
+            input,
+            CURSOR,
+        );
+
+        log_update.render(&text).unwrap();
+
+        match key_stream.next().unwrap().unwrap() {
+            Key::Ctrl('c') => { aborted = true; break },
+            Key::Char('\n') => break,
+            Key::Char(c) => input.push(c),
+            Key::Backspace => { input.pop(); },
+            _ => {},
+        }
+    }
+
+    log_update.clear().unwrap();
+    raw_output.flush().unwrap();
+
+    if aborted { None } else { Some(String::from(input.trim())) }
 }
 
 fn abort() -> ! {
@@ -89,18 +134,18 @@ fn collect_information_and_write_to_file(out_path: String) {
     }
 
     if let Some(emoji) = maybe_emoji {
-        let mut prompt = stderr();
+        let maybe_message = collect_commit_message(emoji);
 
-        write!(prompt, "{}  ", emoji).unwrap();
-        prompt.flush().unwrap();
+        if maybe_message == None {
+            abort();
+        }
 
-        let mut input = String::new();
-        stdin().read_line(&mut input).unwrap();
+        if let Some(message) = maybe_message {
+            let result = format!("{} {}\n", emoji, message);
 
-        let result = format!("{} {}\n", emoji, input.trim());
-
-        let mut f = File::create(out_path).unwrap();
-        f.write_all(result.as_bytes()).unwrap();
+            let mut f = File::create(out_path).unwrap();
+            f.write_all(result.as_bytes()).unwrap();
+        }
     }
 }
 
