@@ -1,6 +1,6 @@
 [root]
 name = "emoji-commit"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "default-editor 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "emoji-commit-type 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",

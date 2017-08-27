@@ -1,6 +1,6 @@
 [package]
 name = "emoji-commit"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Linus Unnebäck <linus@folkdatorn.se>"]
 
 description = "Make your git logs beautiful and readable with the help of emojis"
