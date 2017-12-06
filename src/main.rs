@@ -31,6 +31,11 @@ fn print_emoji_selector<W: Write>(log_update: &mut LogUpdate<W>, selected: &Comm
     log_update.render(&text).unwrap();
 }
 
+fn get_emoji_at_index (index: u8) -> CommitType {
+    let commit_types = CommitType::iter_variants().collect::<Vec<_>>();
+    return commit_types[index as usize];
+}
+
 fn select_emoji() -> Option<&'static str> {
     let mut log_update = LogUpdate::new(stderr()).unwrap();
     let mut raw_output = stderr().into_raw_mode().unwrap();
@@ -48,6 +53,11 @@ fn select_emoji() -> Option<&'static str> {
             Key::Char('\n') => break,
             Key::Up | Key::Char('k') | Key::Char('K') => selected = selected.prev_variant().unwrap_or(CommitType::last_variant()),
             Key::Down | Key::Char('j') | Key::Char('J') => selected = selected.next_variant().unwrap_or(CommitType::first_variant()),
+            Key::Char('1') => { selected =  get_emoji_at_index(0); },
+            Key::Char('2') => { selected =  get_emoji_at_index(1); },
+            Key::Char('3') => { selected =  get_emoji_at_index(2); },
+            Key::Char('4') => { selected =  get_emoji_at_index(3); },
+            Key::Char('5') => { selected =  get_emoji_at_index(4); }
             _ => {},
         }
     }
