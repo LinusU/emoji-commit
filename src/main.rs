@@ -40,24 +40,14 @@ fn select_emoji() -> Option<&'static str> {
     let mut aborted = false;
     let mut selected = CommitType::Breaking;
 
-    fn next_or_first(commit: CommitType) -> CommitType {
-        commit.prev_variant().unwrap_or(CommitType::last_variant())
-    }
-
-    fn prev_or_last(commit: CommitType) -> CommitType {
-        commit.next_variant().unwrap_or(CommitType::first_variant())
-    }
-
     loop {
         print_emoji_selector(&mut log_update, &selected);
 
         match key_stream.next().unwrap().unwrap() {
             Key::Ctrl('c') => { aborted = true; break },
             Key::Char('\n') => break,
-            Key::Up => selected = next_or_first(selected),
-            Key::Down => selected = prev_or_last(selected),
-            Key::Char('k') => selected = next_or_first(selected),
-            Key::Char('j') => selected = prev_or_last(selected),
+            Key::Up | Key::Char('k') | Key::Char('K') => selected = selected.prev_variant().unwrap_or(CommitType::last_variant()),
+            Key::Down | Key::Char('j') | Key::Char('J') => selected = selected.next_variant().unwrap_or(CommitType::first_variant()),
             _ => {},
         }
     }
