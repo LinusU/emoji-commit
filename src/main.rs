@@ -46,8 +46,8 @@ fn select_emoji() -> Option<&'static str> {
         match key_stream.next().unwrap().unwrap() {
             Key::Ctrl('c') => { aborted = true; break },
             Key::Char('\n') => break,
-            Key::Up => selected = selected.prev_variant().unwrap_or(CommitType::last_variant()),
-            Key::Down => selected = selected.next_variant().unwrap_or(CommitType::first_variant()),
+            Key::Up | Key::Char('k') | Key::Char('K') => selected = selected.prev_variant().unwrap_or(CommitType::last_variant()),
+            Key::Down | Key::Char('j') | Key::Char('J') => selected = selected.next_variant().unwrap_or(CommitType::first_variant()),
             _ => {},
         }
     }
