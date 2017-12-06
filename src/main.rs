@@ -53,11 +53,7 @@ fn select_emoji() -> Option<&'static str> {
             Key::Char('\n') => break,
             Key::Up | Key::Char('k') | Key::Char('K') => selected = selected.prev_variant().unwrap_or(CommitType::last_variant()),
             Key::Down | Key::Char('j') | Key::Char('J') => selected = selected.next_variant().unwrap_or(CommitType::first_variant()),
-            Key::Char('1') => { selected =  get_emoji_at_index(0); },
-            Key::Char('2') => { selected =  get_emoji_at_index(1); },
-            Key::Char('3') => { selected =  get_emoji_at_index(2); },
-            Key::Char('4') => { selected =  get_emoji_at_index(3); },
-            Key::Char('5') => { selected =  get_emoji_at_index(4); }
+            Key::Char(key @ '1' ... '5') => { selected = get_emoji_at_index(key.to_string().parse::<u8>().unwrap() - 1); },
             _ => {},
         }
     }
