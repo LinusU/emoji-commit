@@ -24,7 +24,7 @@ static CURSOR: &'static str = "\u{001b}[4m \u{001b}[24m";
 
 fn print_emoji_selector<W: Write>(log_update: &mut LogUpdate<W>, selected: &CommitType) {
     let text = CommitType::iter_variants()
-        .map(|t| format!("{}  {}  - {}", if t == *selected { "👉" } else { " " }, t.emoji(), t.description()))
+        .map(|t| format!("{}  {}  \u{001b}[90m{:<5}\u{001b}[39m  {}", if t == *selected { "👉" } else { "  " }, t.emoji(), t.bump_level().name().to_lowercase(), t.description()))
         .collect::<Vec<_>>()
         .join("\r\n");
 
