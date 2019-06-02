@@ -39,6 +39,9 @@ fn select_emoji() -> Option<&'static str> {
     let mut aborted = false;
     let mut selected = CommitType::Breaking;
 
+    // Clear possibly printed "hint" from git
+    log_update.render("").unwrap();
+
     loop {
         print_emoji_selector(&mut log_update, &selected);
 
