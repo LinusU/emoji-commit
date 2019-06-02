@@ -1,20 +1,15 @@
-extern crate termion;
-extern crate log_update;
-extern crate default_editor;
-extern crate emoji_commit_type;
+use std::env;
+use std::fs::File;
+use std::io::{Write, stderr, stdin};
+use std::process::{Command, exit};
 
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 
-use std::io::{Write, stderr, stdin};
-use std::process::{Command, exit};
-
-use std::env;
-use std::fs::File;
-
-use log_update::LogUpdate;
+use default_editor;
 use emoji_commit_type::CommitType;
+use log_update::LogUpdate;
 
 mod commit_rules;
 
@@ -52,7 +47,7 @@ fn select_emoji() -> Option<&'static str> {
             Key::Char('\n') => break,
             Key::Up | Key::Char('k') | Key::Char('K') => selected = selected.prev_variant().unwrap_or(CommitType::last_variant()),
             Key::Down | Key::Char('j') | Key::Char('J') => selected = selected.next_variant().unwrap_or(CommitType::first_variant()),
-            Key::Char(key @ '1' ... '9') => { commit_type_at_index((key as u8) - ('1' as u8)).map(|t| selected = t); },
+            Key::Char(key @ '1' ..= '9') => { commit_type_at_index((key as u8) - ('1' as u8)).map(|t| selected = t); },
             _ => {},
         }
     }
