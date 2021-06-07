@@ -1,18 +1,14 @@
-use std::mem;
-
-pub struct CommitRuleIterator {
-    index: u8
-}
-
-impl CommitRuleIterator {
-    pub fn new () -> CommitRuleIterator {
-        CommitRuleIterator { index: 0 }
-    }
-}
+use std::iter;
+use emoji_commit_type::CommitType;
 
 pub struct CommitRule {
     pub test: fn(input: &str) -> bool,
     pub text: &'static str,
+}
+
+pub struct CommitRuleValidationResult {
+    pub description: &'static str,
+    pub pass: bool
 }
 
 impl PartialEq for CommitRule {
@@ -102,40 +98,44 @@ const WHAT_AND_WHY_EXPLANATION: CommitRule = CommitRule {
     text: "Use the body to explain what and why vs. how",
 };
 
-trait FetchedAdd {
-    fn fetch_add (&mut self, value: Self) -> Self;
+fn test_starting_emoji (input: &str) -> bool {
+    CommitType::iter_variants().any(|commit_type| {
+        input.starts_with(commit_type.emoji())
+    })
 }
 
-impl FetchedAdd for u8 {
-    fn fetch_add (&mut self, value: Self) -> Self {
-        let next_value = u8::wrapping_add(*self, value);
-        mem::replace(self, next_value)
-    }
+const STARTING_EMOJI_EXPLANATION: CommitRule = CommitRule {
+    test: test_starting_emoji,
+    text: "Commit message has to begin with one of the following emojis: 💥, 🎉, 🐛, 🔥, 🌹",
+};
+
+const RULES: [CommitRule; 7] = [
+    SUBJECT_BODY_SEPARATION,
+    SUBJECT_LINE_LIMIT,
+    SUBJECT_CAPITALIZATION,
+    SUBJECT_PUNCTUATION,
+    IMPERATIVE_MOOD,
+    BODY_WRAPPING,
+    WHAT_AND_WHY_EXPLANATION,
+];
+
+pub fn check_message(message: &str) -> impl Iterator<Item=CommitRuleValidationResult> + '_ {
+    RULES.iter().map(move |rule| CommitRuleValidationResult{
+        description: rule.text,
+        pass: (rule.test)(message)
+    })
 }
 
-impl Iterator for CommitRuleIterator {
-    type Item = CommitRule;
-
-    fn next(&mut self) -> Option<CommitRule> {
-        match self.index.fetch_add(1)  {
-            0 => Some(SUBJECT_BODY_SEPARATION),
-            1 => Some(SUBJECT_LINE_LIMIT),
-            2 => Some(SUBJECT_CAPITALIZATION),
-            3 => Some(SUBJECT_PUNCTUATION),
-            4 => Some(IMPERATIVE_MOOD),
-            5 => Some(BODY_WRAPPING),
-            6 => Some(WHAT_AND_WHY_EXPLANATION),
-            _ => None,
-        }
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (7 - self.index as usize, Some(7 - self.index as usize))
-    }
-}
-
-impl ExactSizeIterator for CommitRuleIterator {
-    fn len(&self) -> usize {
-        7
-    }
+pub fn check_message_with_emoji(message: &str) -> impl Iterator<Item=CommitRuleValidationResult> + '_ {
+    let emoji_validation_result = CommitRuleValidationResult{
+        description: STARTING_EMOJI_EXPLANATION.text,
+        pass: (STARTING_EMOJI_EXPLANATION.test)(message)
+    };
+    let message_without_emoji = CommitType::iter_variants().fold(message, |message, commit_type| {
+        let emoji = format!("{} ", commit_type.emoji());
+        if message.starts_with(&emoji) { &message[emoji.len()..] } else { message }
+    });
+    iter::once(emoji_validation_result).chain(
+        check_message(message_without_emoji)
+    )
 }
