@@ -15,17 +15,18 @@ use default_editor;
 use emoji_commit_type::CommitType;
 use log_update::LogUpdate;
 use structopt::StructOpt;
+use ansi_term::Colour::{RGB, Green, Red, White};
 
 mod commit_rules;
 mod git;
 
-static PASS: &'static str = "\u{001b}[32m✔\u{001b}[39m";
-static FAIL: &'static str = "\u{001b}[31m✖\u{001b}[39m";
-static CURSOR: &'static str = "\u{001b}[4m \u{001b}[24m";
-
 impl fmt::Display for commit_rules::CommitRuleValidationResult {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {}", if self.pass { PASS } else { FAIL }, self.description)
+        write!(f, "{} {}", if self.pass {
+            Green.paint("✔")
+        } else {
+            Red.paint("✖")
+        }, self.description)
     }
 }
 
@@ -73,7 +74,7 @@ fn select_emoji() -> Option<&'static str> {
     if aborted { None } else { Some(selected.emoji()) }
 }
 
-fn collect_commit_message(selected_emoji: &'static str) -> Option<String> {
+fn collect_commit_message(selected_emoji: &'static str, launch_editor: &mut bool) -> Option<String> {
     let mut log_update = LogUpdate::new(stderr()).unwrap();
     let mut raw_output = stderr().into_raw_mode().unwrap();
 
@@ -88,11 +89,12 @@ fn collect_commit_message(selected_emoji: &'static str) -> Option<String> {
             .collect::<Vec<_>>()
             .join("\r\n");
         let text = format!(
-            "\r\nRemember the seven rules of a great Git commit message:\r\n\r\n{}\r\n\r\n{}  {}{}",
+            "\r\nRemember the seven rules of a great Git commit message:\r\n\r\n{}\r\n\r\n{}\r\n{}  {}{}",
             rule_text,
+            RGB(105, 105, 105).paint("Enter - finish, Ctrl-C - abort, Ctrl-E - continue editing in $EDITOR"),
             selected_emoji,
             input,
-            CURSOR,
+            White.underline().paint(" ")
         );
 
         log_update.render(&text).unwrap();
@@ -102,6 +104,7 @@ fn collect_commit_message(selected_emoji: &'static str) -> Option<String> {
             Key::Char('\n') => break,
             Key::Char(c) => input.push(c),
             Key::Backspace => { input.pop(); },
+            Key::Ctrl('e') => { *launch_editor = true; break },
             _ => {},
         }
     }
@@ -149,7 +152,8 @@ fn collect_information_and_write_to_file(out_path: PathBuf) {
     }
 
     if let Some(emoji) = maybe_emoji {
-        let maybe_message = collect_commit_message(emoji);
+        let mut launch_editor = false;
+        let maybe_message = collect_commit_message(emoji, &mut launch_editor);
 
         if maybe_message == None {
             abort();
@@ -158,8 +162,13 @@ fn collect_information_and_write_to_file(out_path: PathBuf) {
         if let Some(message) = maybe_message {
             let result = format!("{} {}\n", emoji, message);
 
-            let mut f = File::create(out_path).unwrap();
+            let mut f = File::create(out_path.clone()).unwrap();
             f.write_all(result.as_bytes()).unwrap();
+            drop(f);
+
+            if launch_editor {
+                launch_default_editor(out_path);
+            }
         }
     }
 }
