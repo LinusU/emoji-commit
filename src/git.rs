@@ -16,7 +16,7 @@ use std::error::Error;
 
 use git2::{ObjectType, Repository};
 
-pub(crate) fn get_commit_messages<P: AsRef<Path>>(repo_path: P, refspecs: &[&str]) -> Result<Vec<String>, Box<dyn Error>> {
+pub(crate) fn get_commit_messages<P: AsRef<Path>>(repo_path: P, refspecs: Vec<String>) -> Result<Vec<String>, Box<dyn Error>> {
     let repo = Repository::discover(repo_path)?;
     let mut revwalk = repo.revwalk()?;
 
@@ -26,7 +26,7 @@ pub(crate) fn get_commit_messages<P: AsRef<Path>>(repo_path: P, refspecs: &[&str
             revwalk.hide(obj.id())?;
             continue;
         }
-        let revspec = repo.revparse(commit)?;
+        let revspec = repo.revparse(commit.as_str())?;
         if revspec.mode().contains(git2::RevparseMode::SINGLE) {
             revwalk.push(revspec.from().unwrap().id())?;
         } else {

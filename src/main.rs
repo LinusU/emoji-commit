@@ -4,6 +4,8 @@ use std::fmt;
 use std::fs::File;
 use std::io::{Write, stderr, stdin};
 use std::process::{Command, exit};
+use std::path::PathBuf;
+use std::str::FromStr;
 
 use termion::event::Key;
 use termion::input::TermRead;
@@ -12,6 +14,7 @@ use termion::raw::IntoRawMode;
 use default_editor;
 use emoji_commit_type::CommitType;
 use log_update::LogUpdate;
+use structopt::StructOpt;
 
 mod commit_rules;
 mod git;
@@ -126,7 +129,7 @@ fn run_cmd(cmd: &mut Command) {
     }
 }
 
-fn launch_default_editor(out_path: &str) {
+fn launch_default_editor(out_path: PathBuf) {
     let editor = default_editor::get().unwrap();
 
     run_cmd(Command::new(&editor).arg(out_path))
@@ -138,7 +141,7 @@ fn launch_git_with_self_as_editor() {
     run_cmd(Command::new("git").arg("commit").env("GIT_EDITOR", self_path))
 }
 
-fn collect_information_and_write_to_file(out_path: &str) {
+fn collect_information_and_write_to_file(out_path: PathBuf) {
     let maybe_emoji = select_emoji();
 
     if maybe_emoji == None {
@@ -172,7 +175,7 @@ impl fmt::Display for ValidationError {
 
 impl Error for ValidationError {}
 
-fn validate(refspecs: &[&str]) -> Result<(), Box<dyn Error>> {
+fn validate(refspecs: Vec<String>) -> Result<(), Box<dyn Error>> {
     let repo_path = env::current_dir()?;
     let messages = git::get_commit_messages(repo_path, refspecs)?;
 
@@ -197,19 +200,54 @@ fn validate(refspecs: &[&str]) -> Result<(), Box<dyn Error>> {
     if has_errors {Err(Box::new(ValidationError{}))} else { Ok(()) }
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let args = env::args().collect::<Vec<_>>();
+#[derive(Debug)]
+enum OutPath {
+    EditMessage(PathBuf),
+    RebaseTodo(PathBuf),
+}
 
-    match args.iter().map(AsRef::as_ref).collect::<Vec<_>>().as_slice() {
-        [_, "--validate", refspecs @ ..] => validate(refspecs),
-        [_, out_path] => {
-            if out_path.ends_with(".git/COMMIT_EDITMSG") {
-                collect_information_and_write_to_file(out_path);
-                Ok(())
-            } else {
-                launch_default_editor(out_path);
-                Ok(())
-            }
+impl FromStr for OutPath {
+    type Err = String;
+    fn from_str(raw: &str) -> Result<Self, Self::Err> {
+        let path = PathBuf::from(raw);
+        if path.ends_with(".git/COMMIT_EDITMSG") {
+            Ok(OutPath::EditMessage(path))
+        } else if path.ends_with(".git/rebase-merge/git-rebase-todo") {
+            Ok(OutPath::RebaseTodo(path))
+        } else {
+            Err(String::from("Must end with one of .git/COMMIT_EDITMSG and .git/rebase-merge/git-rebase-todo"))
+        }
+    }
+}
+
+#[derive(Debug, StructOpt)]
+#[structopt(about = "Make your git logs beautiful and readable with the help of emojis 🎉")]
+struct Opt {
+    #[structopt(
+        help = "Path passed by Git where commit message should be written to. Path will be passed through to $EDITOR if doing a interactive rebase.",
+        group = "mutually-exclusive",
+        hidden = true,
+    )]
+    out_path: Option<OutPath>,
+
+    #[structopt(
+        long = "validate",
+        help = "Validate the provided refspecs against the commit rules. Refspecs can be passed as is or in the special notation defined in git-rev-list.",
+        group = "mutually-exclusive",
+    )]
+    refspecs: Option<Vec<String>>,
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    match Opt::from_args() {
+        Opt {out_path: None, refspecs: Some(refspecs)} => validate(refspecs),
+        Opt {out_path: Some(OutPath::EditMessage(out_path)), refspecs: None} => {
+            collect_information_and_write_to_file(out_path);
+            Ok(())
+        },
+        Opt {out_path: Some(OutPath::RebaseTodo(out_path)), refspecs: None} => {
+            launch_default_editor(out_path);
+            Ok(())
         },
         _ => {
             launch_git_with_self_as_editor();
