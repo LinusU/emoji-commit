@@ -20,8 +20,8 @@ impl PartialEq for CommitRule {
 
 impl Eq for CommitRule {}
 
-fn test_subject_body_separation (_: &str) -> bool {
-    true
+fn test_subject_body_separation (input: &str) -> bool {
+    input.lines().nth(1).map(|line| line == "").unwrap_or(true)
 }
 
 const SUBJECT_BODY_SEPARATION: CommitRule = CommitRule {
@@ -30,7 +30,7 @@ const SUBJECT_BODY_SEPARATION: CommitRule = CommitRule {
 };
 
 fn test_subject_line_limit (input: &str) -> bool {
-    input.len() <= 50
+    input.lines().next().unwrap_or("").len() <= 50
 }
 
 const SUBJECT_LINE_LIMIT: CommitRule = CommitRule {
