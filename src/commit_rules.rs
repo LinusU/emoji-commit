@@ -30,7 +30,7 @@ const SUBJECT_BODY_SEPARATION: CommitRule = CommitRule {
 };
 
 fn test_subject_line_limit (input: &str) -> bool {
-    input.len() <= 50
+    input.lines().next().unwrap_or("").len() <= 50
 }
 
 const SUBJECT_LINE_LIMIT: CommitRule = CommitRule {
