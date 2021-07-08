@@ -213,6 +213,7 @@ fn validate(refspecs: Vec<String>) -> Result<(), Box<dyn Error>> {
 enum OutPath {
     EditMessage(PathBuf),
     RebaseTodo(PathBuf),
+    AddPHunkEdit(PathBuf),
 }
 
 impl FromStr for OutPath {
@@ -223,8 +224,10 @@ impl FromStr for OutPath {
             Ok(OutPath::EditMessage(path))
         } else if path.ends_with(".git/rebase-merge/git-rebase-todo") {
             Ok(OutPath::RebaseTodo(path))
+        } else if path.ends_with(".git/addp-hunk-edit.diff") {
+            Ok(OutPath::AddPHunkEdit(path))
         } else {
-            Err(String::from("Must end with one of .git/COMMIT_EDITMSG and .git/rebase-merge/git-rebase-todo"))
+            Err(String::from(format!("Must end with one of the following: \r\n\t{}\r\n\t{}\r\n\t{}\r\nGot the following path: {:?}", ".git/COMMIT_EDITMSG", ".git/rebase-merge/git-rebase-todo", ".git/addp-hunk-edit.diff", path)))
         }
     }
 }
@@ -254,7 +257,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             collect_information_and_write_to_file(out_path);
             Ok(())
         },
-        Opt {out_path: Some(OutPath::RebaseTodo(out_path)), refspecs: None} => {
+        Opt {
+            out_path: Some(OutPath::RebaseTodo(out_path) | OutPath::AddPHunkEdit(out_path)),
+            refspecs: None,
+        } => {
             launch_default_editor(out_path);
             Ok(())
         },
