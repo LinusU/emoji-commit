@@ -6,6 +6,7 @@ use std::io::{Write, stderr, stdin};
 use std::process::{Command, exit};
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::io::Read;
 
 use termion::event::Key;
 use termion::input::TermRead;
@@ -144,32 +145,48 @@ fn launch_git_with_self_as_editor() {
     run_cmd(Command::new("git").arg("commit").env("GIT_EDITOR", self_path))
 }
 
-fn collect_information_and_write_to_file(out_path: PathBuf) {
-    let maybe_emoji = select_emoji();
-
-    if maybe_emoji == None {
-        abort();
+fn git_message_is_empty(git_commit_contents: & String) -> bool {
+    for line in git_commit_contents.split("\n") {
+        if !line.starts_with('#') && line.len() > 0  {
+            return false;
+        }
     }
+    true
+}
 
-    if let Some(emoji) = maybe_emoji {
-        let mut launch_editor = false;
-        let maybe_message = collect_commit_message(emoji, &mut launch_editor);
+fn collect_information_and_write_to_file(out_path: PathBuf) {
+    let mut file = File::open(out_path.clone().into_os_string().into_string().unwrap()).unwrap();
+    let mut contents = String::new();
+    file.read_to_string(&mut contents).expect("Failed to read from file");
 
-        if maybe_message == None {
+    if git_message_is_empty(&contents) {
+        let maybe_emoji = select_emoji();
+        if maybe_emoji == None {
             abort();
         }
 
-        if let Some(message) = maybe_message {
-            let result = format!("{} {}\n", emoji, message);
+        if let Some(emoji) = maybe_emoji {
+            let mut launch_editor = false;
+            let maybe_message = collect_commit_message(emoji, &mut launch_editor);
+            if maybe_message == None {
+                abort();
+            }
 
-            let mut f = File::create(out_path.clone()).unwrap();
-            f.write_all(result.as_bytes()).unwrap();
-            drop(f);
 
-            if launch_editor {
-                launch_default_editor(out_path);
+            if let Some(message) = maybe_message {
+                let result = format!("{} {}\n", emoji, message);
+
+                let mut f = File::create(out_path.clone()).unwrap();
+                f.write_all(result.as_bytes()).unwrap();
+                drop(f);
+
+                if launch_editor {
+                    launch_default_editor(out_path);
+                }
             }
         }
+    } else {
+        launch_default_editor(out_path);
     }
 }
 
