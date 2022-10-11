@@ -39,7 +39,7 @@ const SUBJECT_LINE_LIMIT: CommitRule = CommitRule {
 };
 
 fn test_subject_capitalization (input: &str) -> bool {
-    input.chars().next().and_then(|first| Some(first.is_uppercase())).unwrap_or(true)
+    input.chars().next().map(|first| first.is_uppercase()).unwrap_or(true)
 }
 
 const SUBJECT_CAPITALIZATION: CommitRule = CommitRule {
