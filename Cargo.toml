@@ -2,7 +2,7 @@
 name = "emoji-commit"
 version = "0.1.8"
 authors = ["Linus Unnebäck <linus@folkdatorn.se>"]
-edition = "2018"
+edition = "2021"
 
 description = "Make your git logs beautiful and readable with the help of emojis"
 homepage = "https://github.com/LinusU/emoji-commit"
