@@ -195,7 +195,7 @@ struct ValidationError;
 
 impl fmt::Display for ValidationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", "One or more commits has validation errors")
+        write!(f, "One or more commits has validation errors")
     }
 }
 
