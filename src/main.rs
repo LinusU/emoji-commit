@@ -62,7 +62,7 @@ fn select_emoji() -> Option<&'static str> {
             Key::Char('\n') => break,
             Key::Up | Key::Char('k') | Key::Char('K') => selected = selected.prev_variant().unwrap_or_else(CommitType::last_variant),
             Key::Down | Key::Char('j') | Key::Char('J') => selected = selected.next_variant().unwrap_or_else(CommitType::first_variant),
-            Key::Char(key @ '1' ..= '9') => { if let Some(t) = commit_type_at_index((key as u8) - ('1' as u8)) { selected = t; } },
+            Key::Char(key @ '1' ..= '9') => { if let Some(t) = commit_type_at_index((key as u8) - b'1') { selected = t; } },
             _ => {},
         }
     }
