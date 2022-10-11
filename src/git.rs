@@ -21,8 +21,8 @@ pub(crate) fn get_commit_messages<P: AsRef<Path>>(repo_path: P, refspecs: Vec<St
     let mut revwalk = repo.revwalk()?;
 
     for commit in refspecs {
-        if commit.starts_with('^') {
-            let obj = repo.revparse_single(&commit[1..])?;
+        if let Some(stripped) = commit.strip_prefix('^') {
+            let obj = repo.revparse_single(stripped)?;
             revwalk.hide(obj.id())?;
             continue;
         }
