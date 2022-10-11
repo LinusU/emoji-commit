@@ -155,7 +155,7 @@ fn git_message_is_empty(git_commit_contents: & String) -> bool {
 }
 
 fn collect_information_and_write_to_file(out_path: PathBuf) {
-    let mut file = File::open(out_path.clone().into_os_string().into_string().unwrap()).unwrap();
+    let mut file = File::open(&out_path).unwrap();
     let mut contents = String::new();
     file.read_to_string(&mut contents).expect("Failed to read from file");
 
