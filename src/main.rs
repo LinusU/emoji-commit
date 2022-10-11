@@ -11,7 +11,6 @@ use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 
-use default_editor;
 use emoji_commit_type::CommitType;
 use log_update::LogUpdate;
 use structopt::StructOpt;
@@ -40,7 +39,7 @@ fn print_emoji_selector<W: Write>(log_update: &mut LogUpdate<W>, selected: &Comm
 }
 
 fn commit_type_at_index (index: u8) -> Option<CommitType> {
-    return CommitType::iter_variants().nth(index as usize);
+    CommitType::iter_variants().nth(index as usize)
 }
 
 fn select_emoji() -> Option<&'static str> {
@@ -61,9 +60,9 @@ fn select_emoji() -> Option<&'static str> {
         match key_stream.next().unwrap().unwrap() {
             Key::Ctrl('c') => { aborted = true; break },
             Key::Char('\n') => break,
-            Key::Up | Key::Char('k') | Key::Char('K') => selected = selected.prev_variant().unwrap_or(CommitType::last_variant()),
-            Key::Down | Key::Char('j') | Key::Char('J') => selected = selected.next_variant().unwrap_or(CommitType::first_variant()),
-            Key::Char(key @ '1' ..= '9') => { commit_type_at_index((key as u8) - ('1' as u8)).map(|t| selected = t); },
+            Key::Up | Key::Char('k') | Key::Char('K') => selected = selected.prev_variant().unwrap_or_else(CommitType::last_variant),
+            Key::Down | Key::Char('j') | Key::Char('J') => selected = selected.next_variant().unwrap_or_else(CommitType::first_variant),
+            Key::Char(key @ '1' ..= '9') => { if let Some(t) = commit_type_at_index((key as u8) - b'1') { selected = t; } },
             _ => {},
         }
     }
@@ -118,7 +117,7 @@ fn collect_commit_message(selected_emoji: &'static str, launch_editor: &mut bool
 fn abort() -> ! {
     let mut output = stderr();
 
-    write!(output, "Aborted...\n").unwrap();
+    writeln!(output, "Aborted...").unwrap();
     output.flush().unwrap();
 
     exit(1)
@@ -195,7 +194,7 @@ struct ValidationError;
 
 impl fmt::Display for ValidationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", "One or more commits has validation errors")
+        write!(f, "One or more commits has validation errors")
     }
 }
 
@@ -212,7 +211,7 @@ fn validate(refspecs: Vec<String>) -> Result<(), Box<dyn Error>> {
                 if !result.pass { Some(format!("\t{}", result)) } else { None }
             })
             .collect::<Vec<_>>();
-        if validation_errors.len() > 0 {
+        if !validation_errors.is_empty() {
             has_errors = true;
             let validation_result_text = validation_errors.join("\r\n");
             let text = format!(
@@ -244,7 +243,7 @@ impl FromStr for OutPath {
         } else if path.ends_with(".git/addp-hunk-edit.diff") {
             Ok(OutPath::AddPHunkEdit(path))
         } else {
-            Err(String::from(format!("Must end with one of the following: \r\n\t{}\r\n\t{}\r\n\t{}\r\nGot the following path: {:?}", ".git/COMMIT_EDITMSG", ".git/rebase-merge/git-rebase-todo", ".git/addp-hunk-edit.diff", path)))
+            Err(format!("Must end with one of the following: \r\n\t{}\r\n\t{}\r\n\t{}\r\nGot the following path: {:?}", ".git/COMMIT_EDITMSG", ".git/rebase-merge/git-rebase-todo", ".git/addp-hunk-edit.diff", path))
         }
     }
 }

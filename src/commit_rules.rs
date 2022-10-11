@@ -21,7 +21,7 @@ impl PartialEq for CommitRule {
 impl Eq for CommitRule {}
 
 fn test_subject_body_separation (input: &str) -> bool {
-    input.lines().nth(1).map(|line| line == "").unwrap_or(true)
+    input.lines().nth(1).map(|line| line.is_empty()).unwrap_or(true)
 }
 
 const SUBJECT_BODY_SEPARATION: CommitRule = CommitRule {
@@ -39,7 +39,7 @@ const SUBJECT_LINE_LIMIT: CommitRule = CommitRule {
 };
 
 fn test_subject_capitalization (input: &str) -> bool {
-    input.chars().next().and_then(|first| Some(first.is_uppercase())).unwrap_or(true)
+    input.chars().next().map(|first| first.is_uppercase()).unwrap_or(true)
 }
 
 const SUBJECT_CAPITALIZATION: CommitRule = CommitRule {
@@ -48,7 +48,7 @@ const SUBJECT_CAPITALIZATION: CommitRule = CommitRule {
 };
 
 fn test_subject_punctuation (input: &str) -> bool {
-    !input.ends_with(".")
+    !input.ends_with('.')
 }
 
 const SUBJECT_PUNCTUATION: CommitRule = CommitRule {
@@ -59,7 +59,7 @@ const SUBJECT_PUNCTUATION: CommitRule = CommitRule {
 fn test_imperativ_mood (input: &str) -> bool {
     let lower = input.to_lowercase();
 
-    return !(
+    !(
         lower.starts_with("adds") ||
         lower.starts_with("added") ||
         lower.starts_with("adding") ||
