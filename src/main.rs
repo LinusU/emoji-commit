@@ -145,7 +145,7 @@ fn launch_git_with_self_as_editor() {
     run_cmd(Command::new("git").arg("commit").env("GIT_EDITOR", self_path))
 }
 
-fn git_message_is_empty(git_commit_contents: & String) -> bool {
+fn git_message_is_empty(git_commit_contents: &str) -> bool {
     for line in git_commit_contents.lines() {
         if !line.starts_with('#') && line.len() > 0  {
             return false;
