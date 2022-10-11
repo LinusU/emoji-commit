@@ -2,7 +2,7 @@ use std::env;
 use std::error::Error;
 use std::fmt;
 use std::fs::File;
-use std::io::{Write, stderr, stdin};
+use std::io::{BufRead, BufReader, Seek, Write, stderr, stdin};
 use std::process::{Command, exit};
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -144,9 +144,26 @@ fn launch_git_with_self_as_editor() {
     run_cmd(Command::new("git").arg("commit").env("GIT_EDITOR", self_path))
 }
 
-fn collect_information_and_write_to_file(out_path: PathBuf) {
-    let maybe_emoji = select_emoji();
+fn git_message_is_empty(file: &mut File) -> bool {
+    for line in BufReader::new(file).lines() {
+        let line = line.expect("Failed to read line from git message file");
 
+        if !line.starts_with('#') && !line.is_empty()  {
+            return false;
+        }
+    }
+    true
+}
+
+fn collect_information_and_write_to_file(out_path: PathBuf) {
+    let mut file = File::open(&out_path).unwrap();
+
+    if !git_message_is_empty(&mut file) {
+        launch_default_editor(out_path);
+        return;
+    }
+
+    let maybe_emoji = select_emoji();
     if maybe_emoji == None {
         abort();
     }
@@ -154,7 +171,6 @@ fn collect_information_and_write_to_file(out_path: PathBuf) {
     if let Some(emoji) = maybe_emoji {
         let mut launch_editor = false;
         let maybe_message = collect_commit_message(emoji, &mut launch_editor);
-
         if maybe_message == None {
             abort();
         }
@@ -162,9 +178,10 @@ fn collect_information_and_write_to_file(out_path: PathBuf) {
         if let Some(message) = maybe_message {
             let result = format!("{} {}\n", emoji, message);
 
-            let mut f = File::create(out_path.clone()).unwrap();
-            f.write_all(result.as_bytes()).unwrap();
-            drop(f);
+            file.set_len(0).unwrap();
+            file.rewind().unwrap();
+            file.write_all(result.as_bytes()).unwrap();
+            drop(file);
 
             if launch_editor {
                 launch_default_editor(out_path);
