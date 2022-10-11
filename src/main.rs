@@ -146,7 +146,7 @@ fn launch_git_with_self_as_editor() {
 }
 
 fn git_message_is_empty(git_commit_contents: & String) -> bool {
-    for line in git_commit_contents.split("\n") {
+    for line in git_commit_contents.lines() {
         if !line.starts_with('#') && line.len() > 0  {
             return false;
         }
