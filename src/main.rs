@@ -11,7 +11,6 @@ use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 
-use default_editor;
 use emoji_commit_type::CommitType;
 use log_update::LogUpdate;
 use structopt::StructOpt;
