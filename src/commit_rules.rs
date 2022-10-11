@@ -48,7 +48,7 @@ const SUBJECT_CAPITALIZATION: CommitRule = CommitRule {
 };
 
 fn test_subject_punctuation (input: &str) -> bool {
-    !input.ends_with(".")
+    !input.ends_with('.')
 }
 
 const SUBJECT_PUNCTUATION: CommitRule = CommitRule {
