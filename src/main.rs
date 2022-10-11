@@ -243,7 +243,7 @@ impl FromStr for OutPath {
         } else if path.ends_with(".git/addp-hunk-edit.diff") {
             Ok(OutPath::AddPHunkEdit(path))
         } else {
-            Err(String::from(format!("Must end with one of the following: \r\n\t{}\r\n\t{}\r\n\t{}\r\nGot the following path: {:?}", ".git/COMMIT_EDITMSG", ".git/rebase-merge/git-rebase-todo", ".git/addp-hunk-edit.diff", path)))
+            Err(format!("Must end with one of the following: \r\n\t{}\r\n\t{}\r\n\t{}\r\nGot the following path: {:?}", ".git/COMMIT_EDITMSG", ".git/rebase-merge/git-rebase-todo", ".git/addp-hunk-edit.diff", path))
         }
     }
 }
