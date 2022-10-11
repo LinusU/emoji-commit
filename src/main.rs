@@ -2,7 +2,7 @@ use std::env;
 use std::error::Error;
 use std::fmt;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Write, stderr, stdin};
+use std::io::{BufRead, BufReader, Seek, Write, stderr, stdin};
 use std::process::{Command, exit};
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -178,9 +178,10 @@ fn collect_information_and_write_to_file(out_path: PathBuf) {
         if let Some(message) = maybe_message {
             let result = format!("{} {}\n", emoji, message);
 
-            let mut f = File::create(out_path.clone()).unwrap();
-            f.write_all(result.as_bytes()).unwrap();
-            drop(f);
+            file.set_len(0).unwrap();
+            file.rewind().unwrap();
+            file.write_all(result.as_bytes()).unwrap();
+            drop(file);
 
             if launch_editor {
                 launch_default_editor(out_path);
