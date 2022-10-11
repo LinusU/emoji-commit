@@ -40,7 +40,7 @@ fn print_emoji_selector<W: Write>(log_update: &mut LogUpdate<W>, selected: &Comm
 }
 
 fn commit_type_at_index (index: u8) -> Option<CommitType> {
-    return CommitType::iter_variants().nth(index as usize);
+    CommitType::iter_variants().nth(index as usize)
 }
 
 fn select_emoji() -> Option<&'static str> {
