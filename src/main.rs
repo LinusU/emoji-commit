@@ -212,7 +212,7 @@ fn validate(refspecs: Vec<String>) -> Result<(), Box<dyn Error>> {
                 if !result.pass { Some(format!("\t{}", result)) } else { None }
             })
             .collect::<Vec<_>>();
-        if validation_errors.len() > 0 {
+        if !validation_errors.is_empty() {
             has_errors = true;
             let validation_result_text = validation_errors.join("\r\n");
             let text = format!(
