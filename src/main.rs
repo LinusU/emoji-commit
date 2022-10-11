@@ -118,7 +118,7 @@ fn collect_commit_message(selected_emoji: &'static str, launch_editor: &mut bool
 fn abort() -> ! {
     let mut output = stderr();
 
-    write!(output, "Aborted...\n").unwrap();
+    writeln!(output, "Aborted...").unwrap();
     output.flush().unwrap();
 
     exit(1)
