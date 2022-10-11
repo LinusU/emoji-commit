@@ -158,34 +158,34 @@ fn git_message_is_empty(file: &mut File) -> bool {
 fn collect_information_and_write_to_file(out_path: PathBuf) {
     let mut file = File::open(&out_path).unwrap();
 
-    if git_message_is_empty(&mut file) {
-        let maybe_emoji = select_emoji();
-        if maybe_emoji == None {
+    if !git_message_is_empty(&mut file) {
+        launch_default_editor(out_path);
+        return;
+    }
+
+    let maybe_emoji = select_emoji();
+    if maybe_emoji == None {
+        abort();
+    }
+
+    if let Some(emoji) = maybe_emoji {
+        let mut launch_editor = false;
+        let maybe_message = collect_commit_message(emoji, &mut launch_editor);
+        if maybe_message == None {
             abort();
         }
 
-        if let Some(emoji) = maybe_emoji {
-            let mut launch_editor = false;
-            let maybe_message = collect_commit_message(emoji, &mut launch_editor);
-            if maybe_message == None {
-                abort();
-            }
+        if let Some(message) = maybe_message {
+            let result = format!("{} {}\n", emoji, message);
 
+            let mut f = File::create(out_path.clone()).unwrap();
+            f.write_all(result.as_bytes()).unwrap();
+            drop(f);
 
-            if let Some(message) = maybe_message {
-                let result = format!("{} {}\n", emoji, message);
-
-                let mut f = File::create(out_path.clone()).unwrap();
-                f.write_all(result.as_bytes()).unwrap();
-                drop(f);
-
-                if launch_editor {
-                    launch_default_editor(out_path);
-                }
+            if launch_editor {
+                launch_default_editor(out_path);
             }
         }
-    } else {
-        launch_default_editor(out_path);
     }
 }
 
