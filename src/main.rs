@@ -2,11 +2,10 @@ use std::env;
 use std::error::Error;
 use std::fmt;
 use std::fs::File;
-use std::io::{Write, stderr, stdin};
+use std::io::{BufRead, BufReader, Write, stderr, stdin};
 use std::process::{Command, exit};
 use std::path::PathBuf;
 use std::str::FromStr;
-use std::io::Read;
 
 use termion::event::Key;
 use termion::input::TermRead;
@@ -145,8 +144,10 @@ fn launch_git_with_self_as_editor() {
     run_cmd(Command::new("git").arg("commit").env("GIT_EDITOR", self_path))
 }
 
-fn git_message_is_empty(git_commit_contents: &str) -> bool {
-    for line in git_commit_contents.lines() {
+fn git_message_is_empty(file: &mut File) -> bool {
+    for line in BufReader::new(file).lines() {
+        let line = line.expect("Failed to read line from git message file");
+
         if !line.starts_with('#') && !line.is_empty()  {
             return false;
         }
@@ -156,10 +157,8 @@ fn git_message_is_empty(git_commit_contents: &str) -> bool {
 
 fn collect_information_and_write_to_file(out_path: PathBuf) {
     let mut file = File::open(&out_path).unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents).expect("Failed to read from file");
 
-    if git_message_is_empty(&contents) {
+    if git_message_is_empty(&mut file) {
         let maybe_emoji = select_emoji();
         if maybe_emoji == None {
             abort();
