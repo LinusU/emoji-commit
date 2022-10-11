@@ -59,7 +59,7 @@ const SUBJECT_PUNCTUATION: CommitRule = CommitRule {
 fn test_imperativ_mood (input: &str) -> bool {
     let lower = input.to_lowercase();
 
-    return !(
+    !(
         lower.starts_with("adds") ||
         lower.starts_with("added") ||
         lower.starts_with("adding") ||
