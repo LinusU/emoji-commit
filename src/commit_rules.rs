@@ -21,7 +21,7 @@ impl PartialEq for CommitRule {
 impl Eq for CommitRule {}
 
 fn test_subject_body_separation (input: &str) -> bool {
-    input.lines().nth(1).map(|line| line == "").unwrap_or(true)
+    input.lines().nth(1).map(|line| line.is_empty()).unwrap_or(true)
 }
 
 const SUBJECT_BODY_SEPARATION: CommitRule = CommitRule {
