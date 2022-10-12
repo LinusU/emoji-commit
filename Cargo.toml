@@ -20,3 +20,9 @@ emoji-commit-type = "~0.1.1"
 git2 = "~0.15.0"
 structopt = "~0.3"
 ansi_term = "~0.12"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "z"
+strip = true
