@@ -155,7 +155,7 @@ fn git_message_is_empty(file: &mut File) -> bool {
 }
 
 fn collect_information_and_write_to_file(out_path: PathBuf) {
-    let mut file = File::open(&out_path).unwrap();
+    let mut file = File::options().read(true).write(true).create(true).open(&out_path).unwrap();
 
     if !git_message_is_empty(&mut file) {
         launch_default_editor(out_path);
