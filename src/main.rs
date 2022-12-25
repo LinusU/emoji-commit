@@ -14,10 +14,14 @@ use termion::raw::IntoRawMode;
 use emoji_commit_type::CommitType;
 use log_update::LogUpdate;
 use structopt::StructOpt;
-use ansi_term::Colour::{RGB, Green, Red, White};
+use ansi_term::Colour::{RGB, Green, Red};
+
 
 mod commit_rules;
 mod git;
+mod input_string;
+
+use crate::input_string::InputString;
 
 impl fmt::Display for commit_rules::CommitRuleValidationResult {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -80,20 +84,19 @@ fn collect_commit_message(selected_emoji: &'static str, launch_editor: &mut bool
     let mut key_stream = stdin().keys();
 
     let mut aborted = false;
-    let mut input = String::new();
+    let mut input = InputString::new();
 
     loop {
-        let rule_text = commit_rules::check_message(&input)
+        let rule_text = commit_rules::check_message(&input.as_str())
             .map(|result| format!("{}", result))
             .collect::<Vec<_>>()
             .join("\r\n");
         let text = format!(
-            "\r\nRemember the seven rules of a great Git commit message:\r\n\r\n{}\r\n\r\n{}\r\n{}  {}{}",
+            "\r\nRemember the seven rules of a great Git commit message:\r\n\r\n{}\r\n\r\n{}\r\n{}  {}",
             rule_text,
             RGB(105, 105, 105).paint("Enter - finish, Ctrl-C - abort, Ctrl-E - continue editing in $EDITOR"),
             selected_emoji,
-            input,
-            White.underline().paint(" ")
+            input.format()
         );
 
         log_update.render(&text).unwrap();
@@ -101,8 +104,12 @@ fn collect_commit_message(selected_emoji: &'static str, launch_editor: &mut bool
         match key_stream.next().unwrap().unwrap() {
             Key::Ctrl('c') => { aborted = true; break },
             Key::Char('\n') => break,
+            Key::Alt(c) => input.handle_control(c),
             Key::Char(c) => input.push(c),
-            Key::Backspace => { input.pop(); },
+            Key::Backspace => input.backspace(),
+            Key::Delete => input.delete(),
+            Key::Left => input.go_char_left(),
+            Key::Right => input.go_char_right(),
             Key::Ctrl('e') => { *launch_editor = true; break },
             _ => {},
         }

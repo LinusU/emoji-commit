@@ -13,7 +13,7 @@ readme = "readme.md"
 license = "MIT"
 
 [dependencies]
-termion = "1.0"
+termion = "2.0.1"
 log-update = "~0.1.0"
 default-editor = "~0.1.0"
 emoji-commit-type = "~0.1.1"
