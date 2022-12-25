@@ -42,14 +42,14 @@ fn commit_type_at_index (index: u8) -> Option<CommitType> {
     CommitType::iter_variants().nth(index as usize)
 }
 
-fn select_emoji() -> Option<&'static str> {
+fn select_emoji(initial_selected: Option<CommitType>) -> Option<&'static str> {
     let mut log_update = LogUpdate::new(stderr()).unwrap();
     let mut raw_output = stderr().into_raw_mode().unwrap();
 
     let mut key_stream = stdin().keys();
 
     let mut aborted = false;
-    let mut selected = CommitType::Breaking;
+    let mut selected = initial_selected.unwrap_or(CommitType::Breaking);
 
     // Clear possibly printed "hint" from git
     log_update.render("").unwrap();
@@ -73,14 +73,14 @@ fn select_emoji() -> Option<&'static str> {
     if aborted { None } else { Some(selected.emoji()) }
 }
 
-fn collect_commit_message(selected_emoji: &'static str, launch_editor: &mut bool) -> Option<String> {
+fn collect_commit_message(selected_emoji: &'static str, initial_message: Option<String>, launch_editor: &mut bool) -> Option<String> {
     let mut log_update = LogUpdate::new(stderr()).unwrap();
     let mut raw_output = stderr().into_raw_mode().unwrap();
 
     let mut key_stream = stdin().keys();
 
     let mut aborted = false;
-    let mut input = String::new();
+    let mut input = initial_message.unwrap_or(String::new());
 
     loop {
         let rule_text = commit_rules::check_message(&input)
@@ -143,6 +143,30 @@ fn launch_git_with_self_as_editor() {
     run_cmd(Command::new("git").arg("commit").env("GIT_EDITOR", self_path))
 }
 
+fn git_parse_existing_message(file: &mut File) -> Option<(CommitType, String)> {
+    let first_line = file.read_line().unwrap().unwrap();
+
+    if first_line.is_empty() {
+        return None;
+    }
+
+
+    let first_str = first_line.chars().next().unwrap().to_string();
+    
+    let commit_type = CommitType::iter_variants().find(|commit_type| {
+        first_str == commit_type.emoji()
+    });
+
+    if commit_type == None { return None; }
+
+    // Check that the rest of the commit message is empty (i.e. no body)
+    if !git_message_is_empty(file) { return None; }
+
+    let emoji = commit_type.unwrap().emoji().to_string();
+    let message = first_line.replace(&emoji, "").trim().to_string();
+    Some((commit_type.unwrap(), message))
+}
+
 fn git_message_is_empty(file: &mut File) -> bool {
     for line in BufReader::new(file).lines() {
         let line = line.expect("Failed to read line from git message file");
@@ -156,20 +180,28 @@ fn git_message_is_empty(file: &mut File) -> bool {
 
 fn collect_information_and_write_to_file(out_path: PathBuf) {
     let mut file = File::options().read(true).write(true).create(true).open(&out_path).unwrap();
+    let mut initial_message: Option<String> = None;
+    let mut initial_commit_type: Option<CommitType> = None;
 
     if !git_message_is_empty(&mut file) {
-        launch_default_editor(out_path);
-        return;
+        file.rewind().unwrap();
+        if let Some((commit_type, message)) = git_parse_existing_message(&mut file) {
+            initial_commit_type = Some(commit_type);
+            initial_message = Some(message);
+        } else {
+            launch_default_editor(out_path);
+            return;
+        }
     }
 
-    let maybe_emoji = select_emoji();
+    let maybe_emoji = select_emoji(initial_commit_type);
     if maybe_emoji == None {
         abort();
     }
 
     if let Some(emoji) = maybe_emoji {
         let mut launch_editor = false;
-        let maybe_message = collect_commit_message(emoji, &mut launch_editor);
+        let maybe_message = collect_commit_message(emoji, initial_message, &mut launch_editor);
         if maybe_message == None {
             abort();
         }
